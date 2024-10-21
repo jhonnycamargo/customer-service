@@ -1,4 +1,4 @@
-package com.vinsguru.customer_service;
+package com.vinsguru.customerportfolio;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

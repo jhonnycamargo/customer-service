@@ -1,4 +1,4 @@
-package com.vinsguru.customer_service;
+package com.vinsguru.customerportfolio;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
