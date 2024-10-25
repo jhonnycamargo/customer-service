@@ -2,6 +2,7 @@ package com.vinsguru.customerportfolio.service;
 
 import com.vinsguru.customerportfolio.dto.StockTradeRequest;
 import com.vinsguru.customerportfolio.dto.StockTradeResponse;
+import com.vinsguru.customerportfolio.exceptions.ApplicationExceptions;
 import com.vinsguru.customerportfolio.repository.CustomerRepository;
 import com.vinsguru.customerportfolio.repository.PortfolioItemRepository;
 import org.springframework.stereotype.Service;
@@ -26,6 +27,10 @@ public class TradeService {
     }
 
     private Mono<StockTradeResponse> buyStock(Integer customerId, StockTradeRequest request){
+        var customerMno = this.customerRepository.findById(customerId)
+                .switchIfEmpty(ApplicationExceptions.customerNotFound(customerId))
+                .filter(customer -> customer.getBalance() >= request.totalPrice())
+                .switchIfEmpty(ApplicationExceptions.insufficientBalance(customerId));
         return Mono.empty();
     }
 

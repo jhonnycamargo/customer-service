@@ -7,4 +7,8 @@ public record StockTradeRequest(Ticker ticker,
                                 Integer price,
                                 Integer quantity,
                                 TradeAction tradeAction) {
+
+    public Integer totalPrice(){
+        return this.price() * this.quantity();
+    }
 }
