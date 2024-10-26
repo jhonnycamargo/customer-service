@@ -47,13 +47,31 @@ public class TradeService {
     private Mono<StockTradeResponse> executeBuy (Customer customer, PortfolioItem portfolioItem, StockTradeRequest request){
         customer.setBalance(customer.getBalance() - request.totalPrice());
         portfolioItem.setQuantity(portfolioItem.getQuantity() + request.quantity());
-        var response = EntityDtoMapper.toStockTradeResponse(request, customer.getId(), customer.getBalance());
-        return Mono.zip(this.customerRepository.save(customer), this.portfolioItemRepository.save(portfolioItem))
-                .thenReturn(response);
+        return this.saveAndBuildResponse(customer, portfolioItem, request);
+    }
+
+    private Mono<StockTradeResponse> executeSell (Customer customer, PortfolioItem portfolioItem, StockTradeRequest request){
+        customer.setBalance(customer.getBalance() + request.totalPrice());
+        portfolioItem.setQuantity(portfolioItem.getQuantity() - request.quantity());
+        return this.saveAndBuildResponse(customer, portfolioItem, request);
     }
 
     private Mono<StockTradeResponse> sellStock(Integer customerId, StockTradeRequest request){
-        return Mono.empty();
+        var customerMno = this.customerRepository.findById(customerId)
+                .switchIfEmpty(ApplicationExceptions.customerNotFound(customerId));
+
+        var portfolioItemMono = this.portfolioItemRepository.findByCustomerIdAndTicker(customerId, request.ticker())
+                .filter(item -> item.getQuantity() >= request.quantity())
+                .switchIfEmpty(ApplicationExceptions.insufficientShares(customerId));
+
+        return customerMno.zipWhen(customer -> portfolioItemMono)
+                .flatMap(t -> this.executeSell(t.getT1(), t.getT2(), request));
+    }
+
+    private Mono<StockTradeResponse> saveAndBuildResponse (Customer customer, PortfolioItem portfolioItem, StockTradeRequest request){
+        var response = EntityDtoMapper.toStockTradeResponse(request, customer.getId(), customer.getBalance());
+        return Mono.zip(this.customerRepository.save(customer), this.portfolioItemRepository.save(portfolioItem))
+                .thenReturn(response);
     }
 
 }
